@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # -------------------------------------------------------
-# init.sh — Single-step deploy: S3 + DynamoDB + EC2 Nginx
+# destroy.sh — Teardown in correct order
 # All values are read from terraform.tfvars — no hardcoding
 # -------------------------------------------------------
 
@@ -32,18 +32,7 @@ echo "  dynamodb_table_name = ${DYNAMO}"
 echo ""
 
 echo "=============================================="
-echo " STEP 1: Creating S3 backend + DynamoDB lock"
-echo "=============================================="
-cd "${SCRIPT_DIR}/bootstrap"
-terraform init -input=false -reconfigure
-terraform apply -input=false -auto-approve \
-  -var="aws_region=${REGION}" \
-  -var="state_bucket_name=${BUCKET}" \
-  -var="dynamodb_table_name=${DYNAMO}"
-
-echo ""
-echo "=============================================="
-echo " STEP 2: Initialising main module (S3 backend)"
+echo " STEP 1: Re-initialising main module"
 echo "=============================================="
 cd "${SCRIPT_DIR}"
 terraform init -input=false -reconfigure \
@@ -55,15 +44,23 @@ terraform init -input=false -reconfigure \
 
 echo ""
 echo "=============================================="
-echo " STEP 3: Deploying Nginx EC2 instance"
+echo " STEP 2: Destroying EC2 Nginx infrastructure"
 echo "=============================================="
-terraform apply -input=false -auto-approve \
+terraform destroy -input=false -auto-approve \
   -var-file="terraform.tfvars"
 
 echo ""
 echo "=============================================="
-echo " Done! Nginx is live at:"
-terraform output nginx_url
-echo " SSH in with:"
-terraform output ssh_command
+echo " STEP 3: Destroying S3 backend + DynamoDB lock"
+echo "=============================================="
+cd "${SCRIPT_DIR}/bootstrap"
+terraform init -input=false -reconfigure
+terraform destroy -input=false -auto-approve \
+  -var="aws_region=${REGION}" \
+  -var="state_bucket_name=${BUCKET}" \
+  -var="dynamodb_table_name=${DYNAMO}"
+
+echo ""
+echo "=============================================="
+echo " All resources destroyed successfully."
 echo "=============================================="
