@@ -41,3 +41,8 @@ variable "html_body" {
   description = "HTML body content injected into the Nginx index page"
   type        = string
 }
+
+variable "ami_id" {
+  description = "AMI ID for the EC2 instance"
+  type        = string
+}

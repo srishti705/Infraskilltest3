@@ -22,20 +22,7 @@ data "aws_vpc" "default" {
 # 3. Data source — latest Ubuntu 20.04 LTS AMI
 #    (owner: Canonical's official AWS account)
 # -------------------------------------------------------
-data "aws_ami" "ubuntu_20_04" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
 
 # -------------------------------------------------------
 # 4. SSH Key Pair
@@ -96,7 +83,7 @@ resource "aws_security_group" "nginx_sg" {
 # 6. EC2 Instance — Ubuntu 20.04, t2.micro
 # -------------------------------------------------------
 resource "aws_instance" "nginx_server" {
-  ami                         = data.aws_ami.ubuntu_20_04.id
+  ami                      = var.ami_id
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.nginx_key.key_name
   vpc_security_group_ids      = [aws_security_group.nginx_sg.id]
